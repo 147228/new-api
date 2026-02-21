@@ -49,6 +49,7 @@ const routerMap = {
   deployment: '/console/deployment',
   playground: '/console/playground',
   personal: '/console/personal',
+  writer: '/console/writer',
 };
 
 const SiderBar = ({ onNavigate = () => {} }) => {
@@ -104,6 +105,11 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         to: '/task',
         className:
           localStorage.getItem('enable_task') === 'true' ? '' : 'tableHiddle',
+      },
+      {
+        text: t('AI 写作'),
+        itemKey: 'writer',
+        to: '/writer',
       },
     ];
 
@@ -277,6 +283,11 @@ const SiderBar = ({ onNavigate = () => {} }) => {
     let matchingKey = Object.keys(routerMapState).find(
       (key) => routerMapState[key] === currentPath,
     );
+
+    // 处理写作编辑器路由
+    if (!matchingKey && currentPath.startsWith('/console/writer/')) {
+      matchingKey = 'writer';
+    }
 
     // 处理聊天路由
     if (!matchingKey && currentPath.startsWith('/console/chat/')) {

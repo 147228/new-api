@@ -75,6 +75,7 @@ import {
   Package,
   Server,
   CalendarClock,
+  PenTool,
 } from 'lucide-react';
 
 // 获取侧边栏Lucide图标组件
@@ -120,6 +121,8 @@ export function getLucideIcon(key, selected = false) {
       return <Server {...commonProps} color={iconColor} />;
     case 'subscription':
       return <CalendarClock {...commonProps} color={iconColor} />;
+    case 'writer':
+      return <PenTool {...commonProps} color={iconColor} />;
     case 'setting':
       return <Settings {...commonProps} color={iconColor} />;
     default:
