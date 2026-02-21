@@ -27,3 +27,11 @@ data/
 .gomodcache/
 .gocache-temp
 .gopath
+*.png
+*.log
+server.log
+.playwright-mcp/
+migrate_rate.go
+fix_rate.go
+web/patches/
+*.exe~

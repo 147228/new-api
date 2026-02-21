@@ -543,9 +543,6 @@ func UpdateUser(c *gin.Context) {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
 	}
-	if updatedUser.Password == "" {
-		updatedUser.Password = "$I_LOVE_U" // make Validator happy :)
-	}
 	if err := common.Validate.Struct(&updatedUser); err != nil {
 		common.ApiErrorI18n(c, i18n.MsgUserInputInvalid, map[string]any{"Error": err.Error()})
 		return
@@ -563,9 +560,6 @@ func UpdateUser(c *gin.Context) {
 	if myRole <= updatedUser.Role && myRole != common.RoleRootUser {
 		common.ApiErrorI18n(c, i18n.MsgUserCannotCreateHigherLevel)
 		return
-	}
-	if updatedUser.Password == "$I_LOVE_U" {
-		updatedUser.Password = "" // rollback to what it should be
 	}
 	updatePassword := updatedUser.Password != ""
 	if err := updatedUser.Edit(updatePassword); err != nil {
@@ -659,9 +653,6 @@ func UpdateSelf(c *gin.Context) {
 		return
 	}
 
-	if user.Password == "" {
-		user.Password = "$I_LOVE_U" // make Validator happy :)
-	}
 	if err := common.Validate.Struct(&user); err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidInput)
 		return
@@ -672,10 +663,6 @@ func UpdateSelf(c *gin.Context) {
 		Username:    user.Username,
 		Password:    user.Password,
 		DisplayName: user.DisplayName,
-	}
-	if user.Password == "$I_LOVE_U" {
-		user.Password = "" // rollback to what it should be
-		cleanUser.Password = ""
 	}
 	updatePassword, err := checkUpdatePassword(user.OriginalPassword, user.Password, cleanUser.Id)
 	if err != nil {

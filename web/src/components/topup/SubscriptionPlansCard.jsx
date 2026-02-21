@@ -23,6 +23,7 @@ import {
   Button,
   Card,
   Divider,
+  Progress,
   Select,
   Skeleton,
   Space,
@@ -32,7 +33,7 @@ import {
 } from '@douyinfe/semi-ui';
 import { API, showError, showSuccess, renderQuota } from '../../helpers';
 import { getCurrencyConfig } from '../../helpers/render';
-import { RefreshCw, Sparkles } from 'lucide-react';
+import { HelpCircle, RefreshCw, Sparkles } from 'lucide-react';
 import SubscriptionPurchaseModal from './modals/SubscriptionPurchaseModal';
 import {
   formatSubscriptionDuration,
@@ -328,6 +329,19 @@ const SubscriptionPlansCard = ({
                 )}
               </div>
               <div className='flex items-center gap-2'>
+                <Tooltip
+                  content={
+                    <div style={{ maxWidth: 240, lineHeight: '1.6' }}>
+                      <div><strong>{t('优先订阅')}</strong>：{t('优先扣套餐额度，用完后扣钱包余额')}</div>
+                      <div><strong>{t('优先钱包')}</strong>：{t('优先扣钱包余额，用完后扣套餐额度')}</div>
+                      <div><strong>{t('仅用订阅')}</strong>：{t('只使用套餐额度，不扣钱包')}</div>
+                      <div><strong>{t('仅用钱包')}</strong>：{t('只使用钱包余额，不使用套餐')}</div>
+                    </div>
+                  }
+                  position='bottomLeft'
+                >
+                  <HelpCircle size={14} className='text-gray-400 cursor-help' />
+                </Tooltip>
                 <Select
                   value={displayBillingPreference}
                   onChange={onChangeBillingPreference}
@@ -442,27 +456,26 @@ const SubscriptionPlansCard = ({
                             (subscription?.end_time || 0) * 1000,
                           ).toLocaleString()}
                         </div>
-                        <div className='text-xs text-gray-500 mb-2'>
-                          {t('总额度')}:{' '}
+                        <div className='text-xs text-gray-500 mb-1'>
+                          {t('已用')}/{t('总计')}:{' '}
                           {totalAmount > 0 ? (
-                            <Tooltip
-                              content={`${t('原生额度')}：${usedAmount}/${totalAmount} · ${t('剩余')} ${remainAmount}`}
-                            >
-                              <span>
-                                {renderQuota(usedAmount)}/
-                                {renderQuota(totalAmount)} · {t('剩余')}{' '}
-                                {renderQuota(remainAmount)}
-                              </span>
-                            </Tooltip>
+                            <span>
+                              {renderQuota(usedAmount)}/{renderQuota(totalAmount)}
+                              <span className='ml-1'>({usagePercent}%)</span>
+                            </span>
                           ) : (
                             t('不限')
                           )}
-                          {totalAmount > 0 && (
-                            <span className='ml-2'>
-                              {t('已用')} {usagePercent}%
-                            </span>
-                          )}
                         </div>
+                        {totalAmount > 0 && (
+                          <Progress
+                            percent={usagePercent}
+                            size='small'
+                            showInfo={false}
+                            stroke={usagePercent > 80 ? 'var(--semi-color-danger)' : usagePercent > 50 ? 'var(--semi-color-warning)' : 'var(--semi-color-success)'}
+                            style={{ marginBottom: 4 }}
+                          />
+                        )}
                         {!isLast && <Divider margin={12} />}
                       </div>
                     );
@@ -498,23 +511,23 @@ const SubscriptionPlansCard = ({
                 const upgradeLabel = plan?.upgrade_group
                   ? `${t('升级分组')}: ${plan.upgrade_group}`
                   : null;
-                const resetLabel =
-                  formatSubscriptionResetPeriod(plan, t) === t('不重置')
-                    ? null
-                    : `${t('额度重置')}: ${formatSubscriptionResetPeriod(plan, t)}`;
+                const hasReset = formatSubscriptionResetPeriod(plan, t) !== t('不重置');
+                const resetLabel = hasReset
+                    ? `${formatSubscriptionResetPeriod(plan, t)}${t('刷新额度')}`
+                    : null;
+                const quotaLabel = hasReset
+                    ? `${t('每期可用额度')}: ${totalAmount > 0 ? renderQuota(totalAmount) : t('不限')}`
+                    : totalLabel;
                 const planBenefits = [
                   {
                     label: `${t('有效期')}: ${formatSubscriptionDuration(plan, t)}`,
                   },
                   resetLabel ? { label: resetLabel } : null,
-                  totalAmount > 0
-                    ? {
-                        label: totalLabel,
-                        tooltip: `${t('原生额度')}：${totalAmount}`,
-                      }
-                    : { label: totalLabel },
+                  { label: quotaLabel },
                   limitLabel ? { label: limitLabel } : null,
-                  upgradeLabel ? { label: upgradeLabel } : null,
+                  plan?.upgrade_group
+                    ? { label: `${t('含')} ${plan.upgrade_group} ${t('权益')}` }
+                    : null,
                 ].filter(Boolean);
 
                 return (

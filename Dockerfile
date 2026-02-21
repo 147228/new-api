@@ -3,6 +3,7 @@ FROM oven/bun:latest AS builder
 WORKDIR /build
 COPY web/package.json .
 COPY web/bun.lock .
+COPY web/scripts ./scripts
 RUN bun install
 COPY ./web .
 COPY ./VERSION .

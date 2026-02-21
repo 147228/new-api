@@ -96,7 +96,7 @@ const SubscriptionPurchaseModal = ({
             <div className='space-y-3'>
               <div className='flex justify-between items-center'>
                 <Text strong className='text-slate-700 dark:text-slate-200'>
-                  {t('套餐名称')}：
+                  {t('套餐')}：
                 </Text>
                 <Typography.Text
                   ellipsis={{ rows: 1, showTooltip: true }}
@@ -129,21 +129,13 @@ const SubscriptionPurchaseModal = ({
               )}
               <div className='flex justify-between items-center'>
                 <Text strong className='text-slate-700 dark:text-slate-200'>
-                  {t('总额度')}：
+                  {t('包含额度')}：
                 </Text>
                 <div className='flex items-center'>
                   <Package size={14} className='mr-1 text-slate-500' />
-                  {totalAmount > 0 ? (
-                    <Tooltip content={`${t('原生额度')}：${totalAmount}`}>
-                      <Text className='text-slate-900 dark:text-slate-100'>
-                        {renderQuota(totalAmount)}
-                      </Text>
-                    </Tooltip>
-                  ) : (
-                    <Text className='text-slate-900 dark:text-slate-100'>
-                      {t('不限')}
-                    </Text>
-                  )}
+                  <Text className='text-slate-900 dark:text-slate-100'>
+                    {totalAmount > 0 ? renderQuota(totalAmount) : t('不限')}
+                  </Text>
                 </div>
               </div>
               {plan?.upgrade_group ? (
@@ -159,13 +151,20 @@ const SubscriptionPurchaseModal = ({
               <Divider margin={8} />
               <div className='flex justify-between items-center'>
                 <Text strong className='text-slate-700 dark:text-slate-200'>
-                  {t('应付金额')}：
+                  {t('需支付')}：
                 </Text>
                 <Text strong className='text-xl text-purple-600'>
                   {symbol}
                   {displayPrice}
                 </Text>
               </div>
+              {formatSubscriptionResetPeriod(plan, t) !== t('不重置') && (
+                <Text type='tertiary' size='small'>
+                  {t('购买后额度')}
+                  {formatSubscriptionResetPeriod(plan, t)}
+                  {t('重置一次')}
+                </Text>
+              )}
             </div>
           </Card>
 
@@ -181,9 +180,14 @@ const SubscriptionPurchaseModal = ({
 
           {hasAnyPayment ? (
             <div className='space-y-3'>
-              <Text size='small' type='tertiary'>
-                {t('选择支付方式')}：
-              </Text>
+              <div className='flex justify-between items-center'>
+                <Text size='small' type='tertiary'>
+                  {t('选择支付方式')}：
+                </Text>
+                <Text size='small' type='success'>
+                  {t('支付成功后套餐立即生效')}
+                </Text>
+              </div>
 
               {/* Stripe / Creem */}
               {(hasStripe || hasCreem) && (

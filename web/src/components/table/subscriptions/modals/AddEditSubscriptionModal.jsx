@@ -298,11 +298,12 @@ const AddEditSubscriptionModal = ({
                     <Col span={12}>
                       <Form.InputNumber
                         field='price_amount'
-                        label={t('实付金额')}
+                        label={t('售价（用户支付金额）')}
                         required
                         min={0}
                         precision={2}
                         rules={[{ required: true, message: t('请输入金额') }]}
+                        extraText={t('用户购买此套餐需支付的金额')}
                         style={{ width: '100%' }}
                       />
                     </Col>
@@ -310,14 +311,16 @@ const AddEditSubscriptionModal = ({
                     <Col span={12}>
                       <Form.InputNumber
                         field='total_amount'
-                        label={t('总额度')}
+                        label={t('包含额度')}
                         required
                         min={0}
                         precision={2}
                         rules={[{ required: true, message: t('请输入总额度') }]}
-                        extraText={`${t('0 表示不限')} · ${t('原生额度')}：${displayAmountToQuota(
-                          values.total_amount,
-                        )}`}
+                        extraText={
+                          values.total_amount > 0
+                            ? `${t('≈')} $${Number(values.total_amount).toFixed(2)} ${t('额度')} · ${t('用户购买后可使用的 API 调用额度')}`
+                            : t('0 表示不限额度')
+                        }
                         style={{ width: '100%' }}
                       />
                     </Col>
@@ -329,9 +332,7 @@ const AddEditSubscriptionModal = ({
                         showClear
                         loading={groupLoading}
                         placeholder={t('不升级')}
-                        extraText={t(
-                          '购买或手动新增订阅会升级到该分组；当套餐失效/过期或手动作废/删除后，将回退到升级前分组。回退不会立即生效，通常会有几分钟延迟。',
-                        )}
+                        extraText={t('购买后自动升级用户分组，过期后自动回退')}
                       >
                         <Select.Option value=''>{t('不升级')}</Select.Option>
                         {(groupOptions || []).map((g) => (
@@ -343,19 +344,11 @@ const AddEditSubscriptionModal = ({
                     </Col>
 
                     <Col span={12}>
-                      <Form.Input
-                        field='currency'
-                        label={t('币种')}
-                        disabled
-                        extraText={t('由全站货币展示设置统一控制')}
-                      />
-                    </Col>
-
-                    <Col span={12}>
                       <Form.InputNumber
                         field='sort_order'
-                        label={t('排序')}
+                        label={t('显示顺序')}
                         precision={0}
+                        extraText={t('数字越小越靠前')}
                         style={{ width: '100%' }}
                       />
                     </Col>
@@ -366,7 +359,7 @@ const AddEditSubscriptionModal = ({
                         label={t('购买上限')}
                         min={0}
                         precision={0}
-                        extraText={t('0 表示不限')}
+                        extraText={t('每位用户最多可购买次数，0 为不限')}
                         style={{ width: '100%' }}
                       />
                     </Col>
@@ -396,7 +389,7 @@ const AddEditSubscriptionModal = ({
                         {t('有效期设置')}
                       </Text>
                       <div className='text-xs text-gray-600'>
-                        {t('配置套餐的有效时长')}
+                        {t('购买后套餐的有效时长，到期后自动失效')}
                       </div>
                     </div>
                   </div>
@@ -458,16 +451,27 @@ const AddEditSubscriptionModal = ({
                         {t('额度重置')}
                       </Text>
                       <div className='text-xs text-gray-600'>
-                        {t('支持周期性重置套餐权益额度')}
+                        {t('额度定期刷新，用户每个周期可用额度恢复到套餐总量')}
                       </div>
                     </div>
                   </div>
 
                   <Row gutter={12}>
-                    <Col span={12}>
+                    <Col span={values.quota_reset_period === 'custom' ? 12 : 24}>
                       <Form.Select
                         field='quota_reset_period'
                         label={t('重置周期')}
+                        extraText={
+                          values.quota_reset_period === 'never'
+                            ? t('不重置：额度用完即止，直到套餐过期')
+                            : values.quota_reset_period === 'daily'
+                              ? t('每天自动恢复额度到套餐总量')
+                              : values.quota_reset_period === 'weekly'
+                                ? t('每周自动恢复额度到套餐总量')
+                                : values.quota_reset_period === 'monthly'
+                                  ? t('每月自动恢复额度到套餐总量')
+                                  : ''
+                        }
                       >
                         {resetPeriodOptions.map((o) => (
                           <Select.Option key={o.value} value={o.value}>
@@ -476,8 +480,8 @@ const AddEditSubscriptionModal = ({
                         ))}
                       </Form.Select>
                     </Col>
-                    <Col span={12}>
-                      {values.quota_reset_period === 'custom' ? (
+                    {values.quota_reset_period === 'custom' && (
+                      <Col span={12}>
                         <Form.InputNumber
                           field='quota_reset_custom_seconds'
                           label={t('自定义秒数')}
@@ -485,19 +489,11 @@ const AddEditSubscriptionModal = ({
                           min={60}
                           precision={0}
                           rules={[{ required: true, message: t('请输入秒数') }]}
+                          extraText={t('最少 60 秒')}
                           style={{ width: '100%' }}
                         />
-                      ) : (
-                        <Form.InputNumber
-                          field='quota_reset_custom_seconds'
-                          label={t('自定义秒数')}
-                          min={0}
-                          precision={0}
-                          style={{ width: '100%' }}
-                          disabled
-                        />
-                      )}
-                    </Col>
+                      </Col>
+                    )}
                   </Row>
                 </Card>
 
@@ -516,7 +512,7 @@ const AddEditSubscriptionModal = ({
                         {t('第三方支付配置')}
                       </Text>
                       <div className='text-xs text-gray-600'>
-                        {t('Stripe/Creem 商品ID（可选）')}
+                        {t('接入 Stripe 或 Creem 后用户可在线支付购买（如不使用可留空）')}
                       </div>
                     </div>
                   </div>

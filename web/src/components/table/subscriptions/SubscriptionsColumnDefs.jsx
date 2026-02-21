@@ -173,7 +173,7 @@ const renderTotalAmount = (text, record, t) => {
   return (
     <Text type={total > 0 ? 'secondary' : 'tertiary'}>
       {total > 0 ? (
-        <Tooltip content={`${t('原生额度')}：${total}`}>
+        <Tooltip content={`≈ $${(total / 500000).toFixed(2)} ${t('额度')}`}>
           <span>{renderQuota(total)}</span>
         </Tooltip>
       ) : (
@@ -303,15 +303,9 @@ export const getSubscriptionsColumns = ({
       render: (text) => renderPrice(text),
     },
     {
-      title: t('购买上限'),
-      width: 90,
+      title: t('限购'),
+      width: 70,
       render: (text, record) => renderPurchaseLimit(text, record, t),
-    },
-    {
-      title: t('优先级'),
-      dataIndex: ['plan', 'sort_order'],
-      width: 80,
-      render: (text) => <Text type='tertiary'>{Number(text || 0)}</Text>,
     },
     {
       title: t('有效期'),
@@ -319,8 +313,8 @@ export const getSubscriptionsColumns = ({
       render: (text, record) => renderDuration(text, record, t),
     },
     {
-      title: t('重置'),
-      width: 80,
+      title: t('额度重置'),
+      width: 90,
       render: (text, record) => renderResetPeriod(text, record, t),
     },
     {
@@ -330,13 +324,7 @@ export const getSubscriptionsColumns = ({
       render: (text, record) => renderEnabled(text, record, t),
     },
     {
-      title: t('支付渠道'),
-      width: 180,
-      render: (text, record) =>
-        renderPaymentConfig(text, record, t, enableEpay),
-    },
-    {
-      title: t('总额度'),
+      title: t('包含额度'),
       width: 100,
       render: (text, record) => renderTotalAmount(text, record, t),
     },
