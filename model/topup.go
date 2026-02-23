@@ -100,6 +100,7 @@ func Recharge(referenceId string, customerId string) (err error) {
 	}
 
 	RecordLog(topUp.UserId, LogTypeTopup, fmt.Sprintf("使用在线充值成功，充值金额: %v，支付金额：%d", logger.FormatQuota(int(quota)), topUp.Amount))
+	GrantAffiliateCommission(topUp.UserId, int(quota))
 
 	return nil
 }
@@ -304,6 +305,7 @@ func ManualCompleteTopUp(tradeNo string) error {
 
 	// 事务外记录日志，避免阻塞
 	RecordLog(userId, LogTypeTopup, fmt.Sprintf("管理员补单成功，充值金额: %v，支付金额：%f", logger.FormatQuota(quotaToAdd), payMoney))
+	GrantAffiliateCommission(userId, quotaToAdd)
 	return nil
 }
 func RechargeCreem(referenceId string, customerEmail string, customerName string) (err error) {
@@ -373,6 +375,37 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 	}
 
 	RecordLog(topUp.UserId, LogTypeTopup, fmt.Sprintf("使用Creem充值成功，充值额度: %v，支付金额：%.2f", quota, topUp.Money))
+	GrantAffiliateCommission(topUp.UserId, int(quota))
 
 	return nil
+}
+
+// GrantAffiliateCommission 邀请充值返佣：被邀请用户充值时，邀请人获得一定比例佣金到 AffQuota
+func GrantAffiliateCommission(userId int, quota int) {
+	if common.AffiliateCommissionRate <= 0 || quota <= 0 {
+		common.SysLog(fmt.Sprintf("affiliate commission skipped: rate=%d, quota=%d", common.AffiliateCommissionRate, quota))
+		return
+	}
+	user, err := GetUserById(userId, false)
+	if err != nil || user == nil || user.InviterId == 0 {
+		if user != nil {
+			common.SysLog(fmt.Sprintf("affiliate commission skipped: user #%d has no inviter (inviter_id=%d)", userId, user.InviterId))
+		}
+		return
+	}
+	commission := quota * common.AffiliateCommissionRate / 100
+	if commission <= 0 {
+		return
+	}
+	err = DB.Model(&User{}).Where("id = ?", user.InviterId).Updates(map[string]interface{}{
+		"aff_quota":         gorm.Expr("aff_quota + ?", commission),
+		"aff_history_quota": gorm.Expr("aff_history_quota + ?", commission),
+	}).Error
+	if err != nil {
+		common.SysError("affiliate commission failed: " + err.Error())
+		return
+	}
+	RecordLog(user.InviterId, LogTypeTopup,
+		fmt.Sprintf("邀请返佣：用户 #%d 充值，返佣 %d%%，获得 %s",
+			userId, common.AffiliateCommissionRate, logger.LogQuota(commission)))
 }

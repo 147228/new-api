@@ -36,6 +36,7 @@ export default function SettingsCreditLimit(props) {
     PreConsumedQuota: '',
     QuotaForInviter: '',
     QuotaForInvitee: '',
+    AffiliateCommissionRate: '',
     'quota_setting.enable_free_model_pre_consume': true,
   });
   const refForm = useRef();
@@ -43,6 +44,17 @@ export default function SettingsCreditLimit(props) {
 
   function onSubmit() {
     const updateArray = compareObjects(inputs, inputsRow);
+    // 检查新增的 key（inputsRow 中不存在但 inputs 中有值的）
+    for (const key of Object.keys(inputs)) {
+      if (
+        !(key in inputsRow) &&
+        inputs[key] !== '' &&
+        inputs[key] !== undefined &&
+        inputs[key] !== null
+      ) {
+        updateArray.push({ key, oldValue: undefined, newValue: inputs[key] });
+      }
+    }
     if (!updateArray.length) return showWarning(t('你似乎并没有修改什么'));
     const requestQueue = updateArray.map((item) => {
       let value = '';
@@ -162,6 +174,24 @@ export default function SettingsCreditLimit(props) {
                     setInputs({
                       ...inputs,
                       QuotaForInvitee: String(value),
+                    })
+                  }
+                />
+              </Col>
+              <Col xs={24} sm={12} md={8} lg={8} xl={6}>
+                <Form.InputNumber
+                  label={t('邀请充值返佣比例')}
+                  field={'AffiliateCommissionRate'}
+                  step={1}
+                  min={0}
+                  max={50}
+                  suffix={'%'}
+                  extraText={t('被邀请用户充值时，邀请人获得相应比例返佣，0 为关闭')}
+                  placeholder={t('例如：10')}
+                  onChange={(value) =>
+                    setInputs({
+                      ...inputs,
+                      AffiliateCommissionRate: String(value),
                     })
                   }
                 />

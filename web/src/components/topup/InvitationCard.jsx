@@ -38,6 +38,7 @@ const InvitationCard = ({
   setOpenTransfer,
   affLink,
   handleAffLinkClick,
+  commissionRate = 0,
 }) => {
   return (
     <Card className='!rounded-2xl shadow-sm border-0'>
@@ -73,9 +74,26 @@ const InvitationCard = ({
               {/* 标题和按钮 */}
               <div className='relative z-10 h-full flex flex-col justify-between p-4'>
                 <div className='flex justify-between items-center'>
-                  <Text strong style={{ color: 'white', fontSize: '16px' }}>
-                    {t('收益统计')}
-                  </Text>
+                  <div className='flex items-center gap-2'>
+                    <Text strong style={{ color: 'white', fontSize: '16px' }}>
+                      {t('收益统计')}
+                    </Text>
+                    {commissionRate > 0 && (
+                      <span
+                        style={{
+                          background: 'rgba(255, 180, 0, 0.85)',
+                          color: '#fff',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {t('返佣')} {commissionRate}%
+                      </span>
+                    )}
+                  </div>
                   <Button
                     type='primary'
                     theme='solid'
@@ -199,6 +217,16 @@ const InvitationCard = ({
           title={<Text type='tertiary'>{t('奖励说明')}</Text>}
         >
           <div className='space-y-3'>
+            {commissionRate > 0 && (
+              <div className='flex items-start gap-2'>
+                <Badge dot type='warning' />
+                <Text type='tertiary' className='text-sm'>
+                  <Text strong className='text-sm'>{t('充值返佣')}</Text>
+                  {' — ' + t('好友每次充值，您自动获得充值金额') + ` ${commissionRate}% ` + t('的返佣奖励')}
+                </Text>
+              </div>
+            )}
+
             <div className='flex items-start gap-2'>
               <Badge dot type='success' />
               <Text type='tertiary' className='text-sm'>

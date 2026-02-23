@@ -20,6 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 import React from 'react';
 import { Modal, Typography, Input, InputNumber } from '@douyinfe/semi-ui';
 import { CreditCard } from 'lucide-react';
+import { getCurrencyConfig } from '../../../helpers/render';
 
 const TransferModal = ({
   t,
@@ -28,10 +29,14 @@ const TransferModal = ({
   handleTransferCancel,
   userState,
   renderQuota,
-  getQuotaPerUnit,
   transferAmount,
   setTransferAmount,
+  minTransfer,
+  maxTransfer,
 }) => {
+  const { symbol, type } = getCurrencyConfig();
+  const prefix = type === 'TOKENS' ? '' : symbol;
+
   return (
     <Modal
       title={
@@ -59,11 +64,14 @@ const TransferModal = ({
         </div>
         <div>
           <Typography.Text strong className='block mb-2'>
-            {t('划转额度')} · {t('最低') + renderQuota(getQuotaPerUnit())}
+            {t('划转额度')} · {t('最低') + ' ' + prefix + minTransfer}
           </Typography.Text>
           <InputNumber
-            min={getQuotaPerUnit()}
-            max={userState?.user?.aff_quota || 0}
+            prefix={prefix}
+            min={minTransfer}
+            max={maxTransfer}
+            step={type === 'TOKENS' ? 1 : 0.1}
+            precision={type === 'TOKENS' ? 0 : 2}
             value={transferAmount}
             onChange={(value) => setTransferAmount(value)}
             className='w-full !rounded-lg'
