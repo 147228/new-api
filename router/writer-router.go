@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
@@ -27,6 +28,18 @@ func SetWriterRouter(router *gin.Engine) {
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(target)
+	// Rewrite redirect Location headers so they go through the proxy
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		if loc := resp.Header.Get("Location"); loc != "" {
+			targetPrefix := target.String()
+			if strings.HasPrefix(loc, targetPrefix) {
+				resp.Header.Set("Location", "/writer-api"+loc[len(targetPrefix):])
+			} else if strings.HasPrefix(loc, "/") {
+				resp.Header.Set("Location", "/writer-api"+loc)
+			}
+		}
+		return nil
+	}
 
 	writerGroup := router.Group("/writer-api")
 	writerGroup.Use(writerAuth())
