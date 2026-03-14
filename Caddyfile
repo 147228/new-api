@@ -1,0 +1,5 @@
+:{$PORT:8080} {
+    reverse_proxy https://aiapi.space {
+        header_up Host aiapi.space
+    }
+}
