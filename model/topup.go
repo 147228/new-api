@@ -399,7 +399,7 @@ func GrantAffiliateCommission(userId int, quota int) {
 	}
 	err = DB.Model(&User{}).Where("id = ?", user.InviterId).Updates(map[string]interface{}{
 		"aff_quota":         gorm.Expr("aff_quota + ?", commission),
-		"aff_history_quota": gorm.Expr("aff_history_quota + ?", commission),
+		"aff_history": gorm.Expr("aff_history + ?", commission),
 	}).Error
 	if err != nil {
 		common.SysError("affiliate commission failed: " + err.Error())

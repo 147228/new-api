@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Card, Button, Typography, Empty, Spin, Modal, Form, Input, Select,
-  InputNumber, Tag, Pagination, Space,
+  Card, Button, Typography, Empty, Spin, Modal, Form, Select,
+  InputNumber, Tag, Pagination,
 } from '@douyinfe/semi-ui';
 import { IconPlus, IconDelete } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
@@ -33,16 +33,28 @@ const Writer = () => {
   } = useWriterProjects();
 
   const [formApi, setFormApi] = useState(null);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     loadProjects(1);
   }, [loadProjects]);
 
   const handleCreate = async () => {
-    const values = formApi.getValues();
-    const result = await createProject(values);
-    if (result) {
-      navigate(`/console/writer/${result.id}`);
+    if (!formApi) return;
+    setCreating(true);
+    try {
+      const values = formApi.getValues();
+      // Set reasonable defaults
+      values.language = values.language || '中文';
+      values.model = values.model || 'gemini-2.5-flash';
+      values.chapter_min_words = values.chapter_min_words || 1500;
+      values.chapter_max_words = values.chapter_max_words || 3000;
+      const result = await createProject(values);
+      if (result) {
+        navigate(`/console/writer/${result.id}`);
+      }
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -99,10 +111,10 @@ const Writer = () => {
                   }
                 >
                   <div style={{ minHeight: 80 }}>
-                    <Text type="tertiary" size="small">{p.novel_type} · {p.language}</Text>
+                    <Text type="tertiary" size="small">{p.novel_type} · {p.language || '中文'}</Text>
                     <br />
                     <Text type="tertiary" size="small">
-                      {t('章节')}: {p.chapter_count} · {t('字数')}: {p.total_words.toLocaleString()}
+                      {t('章节')}: {p.chapter_count || 0} · {t('字数')}: {(p.total_words || 0).toLocaleString()}
                     </Text>
                     {p.custom_prompt && (
                       <Paragraph ellipsis={{ rows: 2 }} style={{ marginTop: 8, fontSize: 12, color: 'var(--semi-color-text-2)' }}>
@@ -110,7 +122,7 @@ const Writer = () => {
                       </Paragraph>
                     )}
                     <Text type="quaternary" size="small" style={{ marginTop: 8, display: 'block' }}>
-                      {new Date(p.updated_at).toLocaleDateString()}
+                      {p.updated_at ? new Date(p.updated_at).toLocaleDateString() : ''}
                     </Text>
                   </div>
                 </Card>
@@ -136,32 +148,50 @@ const Writer = () => {
         visible={showCreate}
         onOk={handleCreate}
         onCancel={() => setShowCreate(false)}
-        width={600}
+        okText={t('创建并开始')}
+        confirmLoading={creating}
+        width={520}
       >
-        <Form getFormApi={setFormApi} labelPosition="left" labelWidth={100}>
-          <Form.Input field="title" label={t('标题')} placeholder={t('小说标题（可选，稍后填写）')} />
-          <Form.Select field="novel_type" label={t('类型')} initValue="奇幻冒险" style={{ width: '100%' }}>
-            {NOVEL_TYPES.map((type) => (
-              <Select.Option key={type} value={type}>{type}</Select.Option>
-            ))}
-          </Form.Select>
+        <Form getFormApi={setFormApi} labelPosition="top">
           <Form.TextArea
             field="custom_prompt"
-            label={t('创作要求')}
-            placeholder={t('描述你想写的故事：题材、主角、背景、情节走向等')}
-            autosize={{ minRows: 3, maxRows: 8 }}
+            label={t('描述你的小说')}
+            placeholder={t('例如：一个穿越到异世界的程序员，利用编程思维修炼魔法，逐步成为大陆最强...')}
+            autosize={{ minRows: 3, maxRows: 6 }}
           />
-          <Space>
-            <Form.InputNumber field="chapter_count" label={t('章节数')} initValue={10} min={1} max={200} style={{ width: 120 }} />
-            <Form.InputNumber field="chapter_min_words" label={t('每章最少字数')} initValue={1500} min={500} step={500} style={{ width: 150 }} />
-            <Form.InputNumber field="chapter_max_words" label={t('每章最多字数')} initValue={3000} min={500} step={500} style={{ width: 150 }} />
-          </Space>
-          <Form.Select field="model" label={t('模型')} initValue="gemini-2.5-pro" style={{ width: '100%' }}>
-            <Select.Option value="gemini-2.5-pro">Gemini 2.5 Pro</Select.Option>
-            <Select.Option value="gemini-2.5-flash">Gemini 2.5 Flash</Select.Option>
-            <Select.Option value="claude-sonnet-4-6">Claude Sonnet 4.6</Select.Option>
-            <Select.Option value="gpt-4o">GPT-4o</Select.Option>
-            <Select.Option value="gpt-4o-mini">GPT-4o Mini</Select.Option>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Form.Select
+              field="novel_type"
+              label={t('小说类型')}
+              initValue="奇幻冒险"
+              style={{ width: '100%' }}
+            >
+              {NOVEL_TYPES.map((type) => (
+                <Select.Option key={type} value={type}>{type}</Select.Option>
+              ))}
+            </Form.Select>
+            <Form.InputNumber
+              field="chapter_count"
+              label={t('章节数')}
+              initValue={10}
+              min={1}
+              max={200}
+              style={{ width: 140 }}
+            />
+          </div>
+          <Form.Select
+            field="model"
+            label={t('AI 模型')}
+            initValue="gemini-3-flash-preview"
+            style={{ width: '100%' }}
+          >
+            <Select.Option value="gemini-3-flash-preview">Gemini 3 Flash — 快速/低价/128K</Select.Option>
+            <Select.Option value="gemini-3-pro-preview">Gemini 3 Pro — 均衡/128K</Select.Option>
+            <Select.Option value="gemini-3.1-pro-preview">Gemini 3.1 Pro — 均衡/128K</Select.Option>
+            <Select.Option value="claude-sonnet-4-6">Claude Sonnet 4.6 — 快速/200K</Select.Option>
+            <Select.Option value="claude-opus-4-6">Claude Opus 4.6 — 最强/200K</Select.Option>
+            <Select.Option value="gpt-5.2">GPT-5.2 — 快速/高价/128K</Select.Option>
+            <Select.Option value="qwen3.5-397b-a17b">Qwen 3.5 MoE — 经济/128K</Select.Option>
           </Form.Select>
         </Form>
       </Modal>
