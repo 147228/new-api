@@ -292,9 +292,9 @@ export const getModelsColumns = ({
     {
       title: t('模型名称'),
       dataIndex: 'model_name',
-      render: (text) => (
+      render: (text, record) => (
         <Text copyable onClick={(e) => e.stopPropagation()}>
-          {text}
+          {record.display_name ? `${record.display_name} (${text})` : text}
         </Text>
       ),
     },

@@ -289,6 +289,7 @@ func migrateDB() error {
 			return err
 		}
 	}
+	seedModelDisplayNames()
 	return nil
 }
 

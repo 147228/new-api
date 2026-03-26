@@ -202,6 +202,11 @@ func ListModels(c *gin.Context, modelType int) {
 		}
 	}
 
+	// Replace model IDs with display_name aliases where configured
+	for i := range userOpenAiModels {
+		userOpenAiModels[i].Id = model.GetModelDisplayName(userOpenAiModels[i].Id)
+	}
+
 	switch modelType {
 	case constant.ChannelTypeAnthropic:
 		useranthropicModels := make([]dto.AnthropicModel, len(userOpenAiModels))
@@ -263,17 +268,22 @@ func EnabledListModels(c *gin.Context) {
 
 func RetrieveModel(c *gin.Context, modelType int) {
 	modelId := c.Param("model")
-	if aiModel, ok := openAIModelsMap[modelId]; ok {
+	// Resolve display_name alias to real model name for lookup
+	realModelId := model.ResolveModelAlias(modelId)
+	if aiModel, ok := openAIModelsMap[realModelId]; ok {
+		displayName := model.GetModelDisplayName(realModelId)
 		switch modelType {
 		case constant.ChannelTypeAnthropic:
 			c.JSON(200, dto.AnthropicModel{
-				ID:          aiModel.Id,
+				ID:          displayName,
 				CreatedAt:   time.Unix(int64(aiModel.Created), 0).UTC().Format(time.RFC3339),
-				DisplayName: aiModel.Id,
+				DisplayName: displayName,
 				Type:        "model",
 			})
 		default:
-			c.JSON(200, aiModel)
+			result := aiModel
+			result.Id = displayName
+			c.JSON(200, result)
 		}
 	} else {
 		openAIError := types.OpenAIError{

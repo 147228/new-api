@@ -2,6 +2,8 @@ package model
 
 import (
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 
@@ -23,6 +25,7 @@ type BoundChannel struct {
 type Model struct {
 	Id           int            `json:"id"`
 	ModelName    string         `json:"model_name" gorm:"size:128;not null;uniqueIndex:uk_model_name_delete_at,priority:1"`
+	DisplayName  string         `json:"display_name,omitempty" gorm:"type:varchar(128)"`
 	Description  string         `json:"description,omitempty" gorm:"type:text"`
 	Icon         string         `json:"icon,omitempty" gorm:"type:varchar(128)"`
 	Tags         string         `json:"tags,omitempty" gorm:"type:varchar(255)"`
@@ -77,7 +80,7 @@ func (mi *Model) Update() error {
 	mi.UpdatedTime = common.GetTimestamp()
 	// 使用 Select 强制更新所有字段，包括零值
 	return DB.Model(&Model{}).Where("id = ?", mi.Id).
-		Select("model_name", "description", "icon", "tags", "vendor_id", "endpoints", "status", "sync_official", "name_rule", "updated_time").
+		Select("model_name", "display_name", "description", "icon", "tags", "vendor_id", "endpoints", "status", "sync_official", "name_rule", "updated_time").
 		Updates(mi).Error
 }
 
@@ -140,7 +143,7 @@ func SearchModels(keyword string, vendor string, offset int, limit int) ([]*Mode
 	db := DB.Model(&Model{})
 	if keyword != "" {
 		like := "%" + keyword + "%"
-		db = db.Where("model_name LIKE ? OR description LIKE ? OR tags LIKE ?", like, like, like)
+		db = db.Where("model_name LIKE ? OR display_name LIKE ? OR description LIKE ? OR tags LIKE ?", like, like, like, like)
 	}
 	if vendor != "" {
 		if vid, err := strconv.Atoi(vendor); err == nil {
@@ -157,4 +160,95 @@ func SearchModels(keyword string, vendor string, offset int, limit int) ([]*Mode
 		return nil, 0, err
 	}
 	return models, total, nil
+}
+
+// ==================== Display Name Alias System ====================
+
+var (
+	displayNameAlias     map[string]string // display_name -> model_name
+	modelDisplayName     map[string]string // model_name -> display_name
+	aliasLock            sync.RWMutex
+	aliasLastRefreshTime time.Time
+)
+
+// refreshAliasCache loads display_name mappings from DB
+func refreshAliasCache() {
+	aliasLock.Lock()
+	defer aliasLock.Unlock()
+
+	if time.Since(aliasLastRefreshTime) < time.Minute {
+		return
+	}
+
+	var models []Model
+	if err := DB.Select("model_name", "display_name").Where("display_name <> ''").Find(&models).Error; err != nil {
+		common.SysLog("refreshAliasCache error: " + err.Error())
+		return
+	}
+
+	newAlias := make(map[string]string, len(models))
+	newDisplay := make(map[string]string, len(models))
+	for _, m := range models {
+		newAlias[m.DisplayName] = m.ModelName
+		newDisplay[m.ModelName] = m.DisplayName
+	}
+	displayNameAlias = newAlias
+	modelDisplayName = newDisplay
+	aliasLastRefreshTime = time.Now()
+}
+
+// ResolveModelAlias resolves a display_name alias to the real model_name.
+// If name is not an alias, returns it unchanged.
+func ResolveModelAlias(name string) string {
+	refreshAliasCache()
+	aliasLock.RLock()
+	defer aliasLock.RUnlock()
+
+	if realName, ok := displayNameAlias[name]; ok {
+		return realName
+	}
+	return name
+}
+
+// GetModelDisplayName returns the display_name for a model_name.
+// If no display_name is set, returns the model_name itself.
+func GetModelDisplayName(modelName string) string {
+	refreshAliasCache()
+	aliasLock.RLock()
+	defer aliasLock.RUnlock()
+
+	if dn, ok := modelDisplayName[modelName]; ok && dn != "" {
+		return dn
+	}
+	return modelName
+}
+
+// InvalidateAliasCache forces a refresh on next access
+func InvalidateAliasCache() {
+	aliasLock.Lock()
+	defer aliasLock.Unlock()
+	aliasLastRefreshTime = time.Time{}
+}
+
+// seedModelDisplayNames sets default display_name for known models (only if display_name is empty).
+// Called once during DB migration. Does not overwrite existing display names.
+func seedModelDisplayNames() {
+	defaults := map[string]string{
+		"gemini-3-pro-preview":   "智写Pro",
+		"gemini-3.1-pro-preview": "智写Pro+",
+		"gemini-3-flash-preview": "智写Flash",
+		"claude-sonnet-4-6":      "创作大师",
+		"claude-opus-4-6":        "创作大师Pro",
+		"gpt-5.2":               "灵感引擎",
+		"qwen3.5-397b-a17b":     "通义写作",
+	}
+	for modelName, displayName := range defaults {
+		result := DB.Model(&Model{}).
+			Where("model_name = ? AND (display_name IS NULL OR display_name = '')", modelName).
+			Update("display_name", displayName)
+		if result.RowsAffected > 0 {
+			common.SysLog("set display_name for " + modelName + " -> " + displayName)
+		}
+	}
+	InvalidateAliasCache()
 }

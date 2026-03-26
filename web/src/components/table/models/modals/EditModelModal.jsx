@@ -312,6 +312,16 @@ const EditModelModal = (props) => {
                   </Col>
 
                   <Col span={24}>
+                    <Form.Input
+                      field='display_name'
+                      label={t('显示名称')}
+                      placeholder={t('留空则显示模型名称')}
+                      extraText={t('对外展示的别名，用户也可以用此名称调用API')}
+                      showClear
+                    />
+                  </Col>
+
+                  <Col span={24}>
                     <Form.Select
                       field='name_rule'
                       label={t('名称匹配类型')}
