@@ -156,6 +156,13 @@ func SubscriptionEpayNotify(c *gin.Context) {
 	LockOrder(verifyInfo.ServiceTradeNo)
 	defer UnlockOrder(verifyInfo.ServiceTradeNo)
 
+	if order := model.GetSubscriptionOrderByTradeNo(verifyInfo.ServiceTradeNo); order != nil {
+		if order.PaymentMethod == PaymentMethodStripe || order.PaymentMethod == PaymentMethodCreem || order.PaymentMethod == "waffo" {
+			_, _ = c.Writer.Write([]byte("fail"))
+			return
+		}
+	}
+
 	if err := model.CompleteSubscriptionOrder(verifyInfo.ServiceTradeNo, common.GetJsonString(verifyInfo)); err != nil {
 		_, _ = c.Writer.Write([]byte("fail"))
 		return

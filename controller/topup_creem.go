@@ -250,6 +250,13 @@ func CreemWebhook(c *gin.Context) {
 		return
 	}
 
+	// 若 Secret 未配置，直接拒绝以防签名伪造
+	if setting.CreemWebhookSecret == "" {
+		log.Printf("Creem Webhook 未配置 Secret，拒绝处理 webhook 以防伪造")
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
 	// 验证签名
 	if !verifyCreemSignature(string(bodyBytes), signature, setting.CreemWebhookSecret) {
 		log.Printf("Creem Webhook签名验证失败")
@@ -302,6 +309,14 @@ func handleCheckoutCompleted(c *gin.Context, event *CreemWebhookEvent) {
 	// Try complete subscription order first
 	LockOrder(referenceId)
 	defer UnlockOrder(referenceId)
+	// Only allow Creem webhook to complete orders whose payment_method is creem
+	if subOrder := model.GetSubscriptionOrderByTradeNo(referenceId); subOrder != nil {
+		if subOrder.PaymentMethod != PaymentMethodCreem {
+			log.Printf("Creem webhook 拒绝：订阅订单支付方式为 %s，非 creem: %s", subOrder.PaymentMethod, referenceId)
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+	}
 	if err := model.CompleteSubscriptionOrder(referenceId, common.GetJsonString(event)); err == nil {
 		c.Status(http.StatusOK)
 		return
@@ -331,6 +346,13 @@ func handleCheckoutCompleted(c *gin.Context, event *CreemWebhookEvent) {
 	if topUp == nil {
 		log.Printf("Creem充值订单不存在: %s", referenceId)
 		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	// Defensive: Creem webhook must only complete Creem-method topups
+	if topUp.PaymentMethod != PaymentMethodCreem {
+		log.Printf("Creem webhook 拒绝：充值订单支付方式为 %s，非 creem: %s", topUp.PaymentMethod, referenceId)
+		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 

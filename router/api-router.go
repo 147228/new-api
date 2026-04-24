@@ -45,8 +45,9 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/oauth/:provider", middleware.CriticalRateLimit(), controller.HandleOAuth)
 		apiRouter.GET("/ratio_config", middleware.CriticalRateLimit(), controller.GetRatioConfig)
 
-		apiRouter.POST("/stripe/webhook", controller.StripeWebhook)
-		apiRouter.POST("/creem/webhook", controller.CreemWebhook)
+		// Stripe/Creem webhook 路由已禁用：未启用 Stripe/Creem 且 Webhook Secret 默认为空会被伪造
+		// apiRouter.POST("/stripe/webhook", controller.StripeWebhook)
+		// apiRouter.POST("/creem/webhook", controller.CreemWebhook)
 
 		// Universal secure verification routes
 		apiRouter.POST("/verify", middleware.UserAuth(), middleware.CriticalRateLimit(), controller.UniversalVerify)

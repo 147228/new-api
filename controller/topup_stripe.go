@@ -155,6 +155,11 @@ func StripeWebhook(c *gin.Context) {
 
 	signature := c.GetHeader("Stripe-Signature")
 	endpointSecret := setting.StripeWebhookSecret
+	if endpointSecret == "" {
+		log.Printf("Stripe Webhook 未配置 Secret，拒绝处理 webhook 以防伪造")
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
 	event, err := webhook.ConstructEventWithOptions(payload, signature, endpointSecret, webhook.ConstructEventOptions{
 		IgnoreAPIVersionMismatch: true,
 	})
@@ -195,6 +200,13 @@ func sessionCompleted(event stripe.Event) {
 		"currency":     strings.ToUpper(event.GetObjectValue("currency")),
 		"event_type":   string(event.Type),
 	}
+	// Ensure we only complete Stripe-method subscription orders via Stripe webhook
+	if subOrder := model.GetSubscriptionOrderByTradeNo(referenceId); subOrder != nil {
+		if subOrder.PaymentMethod != PaymentMethodStripe {
+			log.Printf("Stripe webhook 拒绝：订阅订单支付方式为 %s，非 stripe: %s", subOrder.PaymentMethod, referenceId)
+			return
+		}
+	}
 	if err := model.CompleteSubscriptionOrder(referenceId, common.GetJsonString(payload)); err == nil {
 		return
 	} else if err != nil && !errors.Is(err, model.ErrSubscriptionOrderNotFound) {
@@ -202,6 +214,11 @@ func sessionCompleted(event stripe.Event) {
 		return
 	}
 
+	// Defensive: only recharge topup orders whose payment_method is stripe
+	if topUp := model.GetTopUpByTradeNo(referenceId); topUp != nil && topUp.PaymentMethod != PaymentMethodStripe {
+		log.Printf("Stripe webhook 拒绝：充值订单支付方式为 %s，非 stripe: %s", topUp.PaymentMethod, referenceId)
+		return
+	}
 	err := model.Recharge(referenceId, customerId)
 	if err != nil {
 		log.Println(err.Error(), referenceId)
