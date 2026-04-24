@@ -1,17 +1,29 @@
 package middleware
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 )
 
+const cacheVersion = "20260424-desktop-model-config-v2"
+
 func Cache() func(c *gin.Context) {
 	return func(c *gin.Context) {
-		if c.Request.RequestURI == "/" {
-			c.Header("Cache-Control", "no-cache")
+		path := c.Request.URL.Path
+		if strings.HasPrefix(path, "/api/") {
+			c.Header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+			c.Header("Pragma", "no-cache")
+			c.Header("Expires", "0")
+		} else if c.Request.Method == http.MethodGet && (path == "/" || !strings.Contains(path, ".")) {
+			c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Header("Pragma", "no-cache")
+			c.Header("Expires", "0")
 		} else {
-			c.Header("Cache-Control", "max-age=604800") // one week
+			c.Header("Cache-Control", "public, max-age=604800, immutable") // one week
 		}
-		c.Header("Cache-Version", "b688f2fb5be447c25e5aa3bd063087a83db32a288bf6a4f35f2d8db310e40b14")
+		c.Header("Cache-Version", cacheVersion)
 		c.Next()
 	}
 }
