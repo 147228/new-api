@@ -69,6 +69,15 @@ var EmailLoginAuthServerList = []string{
 	"smtp.azurecomm.net",
 }
 
+// 桌面客户端可见模型白名单（丸美小沐专用）
+// 逗号分隔的模型 id 列表。空字符串 / 未设置 = 显示全部
+// 设置后只有列表里的模型会出现在桌面客户端的模型选择器里
+var DesktopVisibleModels = ""
+var DesktopModelsConfig = ""
+var DesktopModelOrder = ""
+var DesktopDefaultModel = ""
+var DesktopModelRouting = ""
+
 var DebugEnabled bool
 var MemoryCacheEnabled bool
 

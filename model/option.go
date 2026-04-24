@@ -56,6 +56,11 @@ func InitOptionMap() {
 	common.OptionMap["EmailDomainRestrictionEnabled"] = strconv.FormatBool(common.EmailDomainRestrictionEnabled)
 	common.OptionMap["EmailAliasRestrictionEnabled"] = strconv.FormatBool(common.EmailAliasRestrictionEnabled)
 	common.OptionMap["EmailDomainWhitelist"] = strings.Join(common.EmailDomainWhitelist, ",")
+	common.OptionMap["DesktopVisibleModels"] = common.DesktopVisibleModels
+	common.OptionMap["DesktopModelsConfig"] = common.DesktopModelsConfig
+	common.OptionMap["DesktopModelOrder"] = common.DesktopModelOrder
+	common.OptionMap["DesktopDefaultModel"] = common.DesktopDefaultModel
+	common.OptionMap["DesktopModelRouting"] = common.DesktopModelRouting
 	common.OptionMap["SMTPServer"] = ""
 	common.OptionMap["SMTPFrom"] = ""
 	common.OptionMap["SMTPPort"] = strconv.Itoa(common.SMTPPort)
@@ -304,6 +309,16 @@ func updateOptionMap(key string, value string) (err error) {
 	switch key {
 	case "EmailDomainWhitelist":
 		common.EmailDomainWhitelist = strings.Split(value, ",")
+	case "DesktopVisibleModels":
+		common.DesktopVisibleModels = value
+	case "DesktopModelsConfig":
+		common.DesktopModelsConfig = value
+	case "DesktopModelOrder":
+		common.DesktopModelOrder = value
+	case "DesktopDefaultModel":
+		common.DesktopDefaultModel = value
+	case "DesktopModelRouting":
+		common.DesktopModelRouting = value
 	case "SMTPServer":
 		common.SMTPServer = value
 	case "SMTPPort":

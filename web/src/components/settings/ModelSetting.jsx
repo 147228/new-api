@@ -26,6 +26,7 @@ import SettingGeminiModel from '../../pages/Setting/Model/SettingGeminiModel';
 import SettingClaudeModel from '../../pages/Setting/Model/SettingClaudeModel';
 import SettingGlobalModel from '../../pages/Setting/Model/SettingGlobalModel';
 import SettingGrokModel from '../../pages/Setting/Model/SettingGrokModel';
+import SettingDesktopModel from '../../pages/Setting/Model/SettingDesktopModel';
 import SettingsChannelAffinity from '../../pages/Setting/Operation/SettingsChannelAffinity';
 
 const ModelSetting = () => {
@@ -65,7 +66,9 @@ const ModelSetting = () => {
           item.key === 'claude.default_max_tokens' ||
           item.key === 'gemini.supported_imagine_models' ||
           item.key === 'global.thinking_model_blacklist' ||
-          item.key === 'global.chat_completions_to_responses_policy'
+          item.key === 'global.chat_completions_to_responses_policy' ||
+          item.key === 'DesktopModelsConfig' ||
+          item.key === 'DesktopModelRouting'
         ) {
           if (item.value !== '') {
             try {
@@ -112,6 +115,10 @@ const ModelSetting = () => {
         {/* OpenAI */}
         <Card style={{ marginTop: '10px' }}>
           <SettingGlobalModel options={inputs} refresh={onRefresh} />
+        </Card>
+        {/* Desktop client */}
+        <Card style={{ marginTop: '10px' }}>
+          <SettingDesktopModel options={inputs} refresh={onRefresh} />
         </Card>
         {/* Channel affinity */}
         <Card style={{ marginTop: '10px' }}>
