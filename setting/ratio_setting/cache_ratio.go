@@ -1,6 +1,8 @@
 package ratio_setting
 
 import (
+	"strings"
+
 	"github.com/QuantumNous/new-api/types"
 )
 
@@ -125,19 +127,60 @@ func UpdateCreateCacheRatioByJSONString(jsonStr string) error {
 
 // GetCacheRatio returns the cache ratio for a model
 func GetCacheRatio(name string) (float64, bool) {
+	name = FormatMatchingModelName(name)
+
 	ratio, ok := cacheRatioMap.Get(name)
 	if !ok {
+		if fallbackRatio, matched := getFallbackCacheRatio(name); matched {
+			return fallbackRatio, true
+		}
 		return 1, false // Default to 1 if not found
 	}
 	return ratio, true
 }
 
 func GetCreateCacheRatio(name string) (float64, bool) {
+	name = FormatMatchingModelName(name)
+
 	ratio, ok := createCacheRatioMap.Get(name)
 	if !ok {
+		if fallbackRatio, matched := getFallbackCreateCacheRatio(name); matched {
+			return fallbackRatio, true
+		}
 		return 1.25, false // Default to 1.25 if not found
 	}
 	return ratio, true
+}
+
+func getFallbackCacheRatio(name string) (float64, bool) {
+	switch {
+	case strings.HasPrefix(name, "gpt-5"):
+		return 0.1, true
+	case strings.HasPrefix(name, "gpt-4.1"):
+		return 0.25, true
+	case strings.HasPrefix(name, "gpt-4o") ||
+		strings.HasPrefix(name, "gpt-4.5-preview") ||
+		name == "gpt-4":
+		return 0.5, true
+	case strings.HasPrefix(name, "gemini-3"):
+		return 0.25, true
+	case strings.HasPrefix(name, "claude-3") ||
+		strings.HasPrefix(name, "claude-haiku-4") ||
+		strings.HasPrefix(name, "claude-sonnet-4") ||
+		strings.HasPrefix(name, "claude-opus-4"):
+		return 0.1, true
+	}
+	return 1, false
+}
+
+func getFallbackCreateCacheRatio(name string) (float64, bool) {
+	if strings.HasPrefix(name, "claude-3") ||
+		strings.HasPrefix(name, "claude-haiku-4") ||
+		strings.HasPrefix(name, "claude-sonnet-4") ||
+		strings.HasPrefix(name, "claude-opus-4") {
+		return 1.25, true
+	}
+	return 1.25, false
 }
 
 func GetCacheRatioCopy() map[string]float64 {
