@@ -9,7 +9,7 @@ import (
 var defaultCacheRatio = map[string]float64{
 	"gemini-3-flash-preview":              0.25,
 	"gemini-3-pro-preview":                0.25,
-	"gpt-4":                               0.4,
+	"gpt-4":                               0.15,
 	"o1":                                  0.5,
 	"o1-2024-12-17":                       0.5,
 	"o1-preview-2024-09-12":               0.5,
@@ -18,28 +18,28 @@ var defaultCacheRatio = map[string]float64{
 	"o1-mini":                             0.5,
 	"o3-mini":                             0.5,
 	"o3-mini-2025-01-31":                  0.5,
-	"gpt-4o-2024-11-20":                   0.4,
-	"gpt-4o-2024-08-06":                   0.4,
-	"gpt-4o":                              0.4,
-	"gpt-4o-mini-2024-07-18":              0.4,
-	"gpt-4o-mini":                         0.4,
-	"gpt-4o-realtime-preview":             0.4,
-	"gpt-4o-mini-realtime-preview":        0.4,
-	"gpt-4.5-preview":                     0.4,
-	"gpt-4.5-preview-2025-02-27":          0.4,
-	"gpt-4.1":                             0.4,
-	"gpt-4.1-mini":                        0.4,
-	"gpt-4.1-nano":                        0.4,
-	"gpt-5":                               0.4,
-	"gpt-5-2025-08-07":                    0.4,
-	"gpt-5-chat-latest":                   0.4,
-	"gpt-5-mini":                          0.4,
-	"gpt-5-mini-2025-08-07":               0.4,
-	"gpt-5-nano":                          0.4,
-	"gpt-5-nano-2025-08-07":               0.4,
-	"deepseek-chat":                       0.25,
-	"deepseek-reasoner":                   0.25,
-	"deepseek-coder":                      0.25,
+	"gpt-4o-2024-11-20":                   0.15,
+	"gpt-4o-2024-08-06":                   0.15,
+	"gpt-4o":                              0.15,
+	"gpt-4o-mini-2024-07-18":              0.15,
+	"gpt-4o-mini":                         0.15,
+	"gpt-4o-realtime-preview":             0.15,
+	"gpt-4o-mini-realtime-preview":        0.15,
+	"gpt-4.5-preview":                     0.15,
+	"gpt-4.5-preview-2025-02-27":          0.15,
+	"gpt-4.1":                             0.15,
+	"gpt-4.1-mini":                        0.15,
+	"gpt-4.1-nano":                        0.15,
+	"gpt-5":                               0.15,
+	"gpt-5-2025-08-07":                    0.15,
+	"gpt-5-chat-latest":                   0.15,
+	"gpt-5-mini":                          0.15,
+	"gpt-5-mini-2025-08-07":               0.15,
+	"gpt-5-nano":                          0.15,
+	"gpt-5-nano-2025-08-07":               0.15,
+	"deepseek-chat":                       0.15,
+	"deepseek-reasoner":                   0.15,
+	"deepseek-coder":                      0.15,
 	"claude-3-sonnet-20240229":            0.1,
 	"claude-3-opus-20240229":              0.1,
 	"claude-3-haiku-20240307":             0.1,
@@ -150,8 +150,8 @@ func GetCreateCacheRatio(name string) (float64, bool) {
 }
 
 func getFallbackCacheRatio(name string) (float64, bool) {
-	if strings.HasPrefix(name, "gpt-") {
-		return 0.4, true
+	if strings.HasPrefix(name, "gpt-") || strings.HasPrefix(name, "deepseek-") {
+		return 0.15, true
 	}
 	return 1, false
 }

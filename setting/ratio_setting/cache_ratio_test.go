@@ -2,7 +2,7 @@ package ratio_setting
 
 import "testing"
 
-func TestGetCacheRatioUsesPointFourForGPTModels(t *testing.T) {
+func TestGetCacheRatioUsesPointFifteenForGPTAndDeepSeekModels(t *testing.T) {
 	InitRatioSettings()
 
 	tests := []struct {
@@ -10,10 +10,12 @@ func TestGetCacheRatioUsesPointFourForGPTModels(t *testing.T) {
 		model string
 		want  float64
 	}{
-		{name: "mapped gpt 4o", model: "gpt-4o", want: 0.4},
-		{name: "mapped gpt 5", model: "gpt-5", want: 0.4},
-		{name: "xiaomu gpt 5.4", model: "gpt-5.4", want: 0.4},
-		{name: "future gpt 5 mini", model: "gpt-5.4-mini", want: 0.4},
+		{name: "mapped gpt 4o", model: "gpt-4o", want: 0.15},
+		{name: "mapped gpt 5", model: "gpt-5", want: 0.15},
+		{name: "xiaomu gpt 5.4", model: "gpt-5.4", want: 0.15},
+		{name: "future gpt 5 mini", model: "gpt-5.4-mini", want: 0.15},
+		{name: "mapped deepseek chat", model: "deepseek-chat", want: 0.15},
+		{name: "future deepseek model", model: "deepseek-v3.1", want: 0.15},
 	}
 
 	for _, tt := range tests {
